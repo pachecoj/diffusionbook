@@ -1,0 +1,6 @@
+data/
+MNIST/
+__pychache__/
+.DS_Store
+run/
+.idea/
