@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from torch.optim.lr_scheduler import OneCycleLR
 from unet import Unet
+import time
 
 
 class UNetWithTime(nn.Module):
@@ -44,18 +45,10 @@ beta = torch.linspace(1e-4, 0.02, n_steps).to(device)
 alpha = 1.0 - beta
 alpha_bar = torch.cumprod(alpha, dim=0)
 
-model = Unet(n_steps, 256, in_channels=3, out_channels=3, base_dim=64, dim_mults=[2, 4]).to(device)  # UNetWithTime().to(device)
+model = Unet(n_steps, 256, in_channels=1, out_channels=1, base_dim=64, dim_mults=[2, 4]).to(device)  # UNetWithTime().to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-# loader = DataLoader(datasets.MNIST('.', train=True, download=True,
-#                                   transform=transforms.ToTensor()), batch_size=128, shuffle=True)
-transform = T.Compose([
-    T.Resize((128, 128)),
-    T.ToTensor(),
-    T.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-])
-loader = DataLoader(datasets.CelebA('.', split="train", target_type='attr', transform=transform, download=True), batch_size=64, shuffle=True)
-scheduler = OneCycleLR(optimizer, lr, total_steps=nepochs * len(loader), pct_start=0.25,
-                       anneal_strategy='cos')
+loader = DataLoader(datasets.MNIST('../data', train=True, download=True,
+                                   transform=transforms.ToTensor()), batch_size=128, shuffle=True)
 
 # --- Training ---
 for epoch in range(nepochs):
@@ -76,10 +69,11 @@ for epoch in range(nepochs):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        scheduler.step()
-    print(f"Epoch {epoch+1}/{nepochs} complete | Loss: {loss.item()} | LR: {scheduler.get_last_lr()[0]}")
+    print(f"Epoch {epoch+1}/{nepochs} complete | Loss: {loss.item()}")
 
     # --- Generation (The Sampling Loop) ---
+    start_time = time.perf_counter()
+    print("Generating Samples...")
     if not (epoch+1) % view_interval:
         model.eval()
         with torch.no_grad():
@@ -99,6 +93,9 @@ for epoch in range(nepochs):
                 # DDPM Sampling Formula
                 z = torch.randn_like(img) if i > 0 else 0
                 img = (1 / torch.sqrt(a_t)) * (img - (beta_t / torch.sqrt(1 - ab_t)) * pred_noise) + torch.sqrt(beta_t) * z
+
+        end_time = time.perf_counter()
+        print(f"Time {end_time - start_time:.2f}s")
 
         # --- Plotting Results ---
         img_tmp = img.cpu().squeeze().numpy()

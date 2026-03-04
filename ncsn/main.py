@@ -162,7 +162,7 @@ def annealed_langevin_dynamics(model, sigmas, n_steps=100, eps=2e-5, device='cpu
 
 def load_mnist():
     transform = transforms.Compose([transforms.ToTensor()])
-    dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
+    dataset = datasets.MNIST('../data', train=True, download=True, transform=transform)
     loader = DataLoader(dataset, batch_size=128, shuffle=True)
     return loader
 
@@ -177,7 +177,7 @@ def load_fashion_mnist():
 
     # 2. Download and Load the Training Set
     train_dataset = datasets.FashionMNIST(
-        root='./data',
+        root='../data',
         train=True,
         download=True,
         transform=transform
@@ -185,7 +185,7 @@ def load_fashion_mnist():
 
     # 3. Download and Load the Test Set
     test_dataset = datasets.FashionMNIST(
-        root='./data',
+        root='../data',
         train=False,
         download=True,
         transform=transform
@@ -205,7 +205,7 @@ if __name__ == "__main__":
     # Hyperparameters
     lr = 0.001
     nepochs = 50
-    plot_interval = 10
+    plot_interval = 1
     sigma_min = 0.01
     sigma_max = 1.0
     num_scales = 10
@@ -254,7 +254,10 @@ if __name__ == "__main__":
         # Sampling
         if (epoch + 1) % plot_interval == 0:
             print("Generating Samples...")
+            start_time = time.perf_counter()
             samples = annealed_langevin_dynamics(model, sigmas, device=device)
+            end_time = time.perf_counter()
+            print(f"Time {end_time - start_time:.2f}s")
 
             # Plotting
             grid = utils.make_grid(samples, nrow=4).cpu().numpy().transpose(1, 2, 0)
