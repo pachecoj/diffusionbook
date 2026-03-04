@@ -14,7 +14,7 @@ def weierstrass(x, a=0.5, b=3, iterations=100):
     return result
 
 # 1. Setup the x-axis
-x = np.linspace(-2, 2, 5000)
+x = np.linspace(-2, 2, 5000000)
 y = weierstrass(x)
 
 # 2. Plotting
